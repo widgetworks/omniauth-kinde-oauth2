@@ -4,5 +4,8 @@ source 'https://rubygems.org'
 gemspec
 
 group :example do
-  gem 'sinatra'
+  gem 'sinatra', '~>4.0'
+  gem "omniauth", "~>2.1.2"
+  gem 'dotenv', '~>3.1.2'
+  gem "foreman"
 end
