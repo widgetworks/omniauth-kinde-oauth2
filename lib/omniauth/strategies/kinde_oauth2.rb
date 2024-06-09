@@ -45,40 +45,6 @@ module OmniAuth
         }
       end
 
-      # # Define the parameters used for the /authorize endpoint
-      # def authorize_params
-      #   params = super
-      #   [
-      #     'audience',
-      #     'client_id',
-      #     'code_challenge',
-      #     'code_challenge_method',
-      #     'connection_id',
-      #     'is_create_org',
-      #     'lang',
-      #     'login_hint',
-      #     'org_code',
-      #     'org_name',
-      #     'prompt',
-      #     'redirect_uri',
-      #     'response_type',
-      #     'scope',
-      #     'state',
-      #   ].each do |key|
-      #     params[key] = request.params[key] if request.params.key?(key)
-      #   end
-      #
-      #   # # Generate nonce
-      #   # params[:nonce] = SecureRandom.hex
-      #   # # Generate leeway if none exists
-      #   # params[:leeway] = 60 unless params[:leeway]
-      #   #
-      #   # # Store authorize params in the session for token verification
-      #   # session['authorize_params'] = params.to_hash
-      #
-      #   params
-      # end
-
       # Define the parameters used for the /auth endpoint
       def authorize_params
         params = super
