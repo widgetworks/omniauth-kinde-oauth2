@@ -1,4 +1,0 @@
-# Run the example sinatra app
-# Using foreman to try and debug from Windows via WSL
-
-example: ruby sinatra.rb
