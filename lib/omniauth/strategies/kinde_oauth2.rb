@@ -34,14 +34,14 @@ module OmniAuth
       end
 
       uid {
-        raw_info['sub']
+        raw_info['id']
       }
 
       info do
         {
-          first_name: raw_info['given_name'],
-          last_name: raw_info['family_name'],
-          email: raw_info['email'],
+          first_name: raw_info['first_name'],
+          last_name: raw_info['last_name'],
+          email: raw_info['preferred_email'],
         }
       end
 
@@ -128,15 +128,26 @@ module OmniAuth
 
       private
 
+      # userinfo returns an object like:
+      #
+      # {
+      #   id="kp_012345abcdef012345abcdef012345ab"
+      #   first_name="Firstname"
+      #   last_name="Lastname"
+      #   preferred_email="user@example.com"
+      #   picture=nil
+      #   provided_id=nil
+      #   username="Username"
+      # }
       def raw_info
         return @raw_info if @raw_info
 
-        puts "access_token\n\n"
-        puts access_token.to_json
-        puts "end access_token\n\n"
-
+        # Normally we would just decode the token and return that result,
+        # but kinde doesn't much of the needed information on that token:
         # @raw_info ||= ::JWT.decode(access_token.token, nil, false).first
 
+        # Instead, we make another request and get the user information
+        # from the `userinfo_url` endpoint (email, name, etc.)
         userinfo_url = options.client_options.userinfo_url
         @raw_info = access_token.get(userinfo_url).parsed
 

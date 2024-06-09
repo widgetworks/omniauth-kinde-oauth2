@@ -4,8 +4,11 @@ source 'https://rubygems.org'
 gemspec
 
 group :example do
+  gem 'rack', '~>3.0.11'
   gem 'sinatra', '~>4.0'
   gem "omniauth", "~>2.1.2"
   gem 'dotenv', '~>3.1.2'
   gem "foreman"
+  gem "rackup"
+  gem "puma"
 end
