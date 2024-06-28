@@ -1,3 +1,19 @@
+Coridyn - this is the structure of data returned from the `/userinfo` endpoint
+
+{
+  id => "kp_012345abcdef012345abcdef012345ab",
+  first_name => "Firstname",
+  last_name => "Lastname",
+  preferred_email => "user@example.com",
+  picture => null,
+  provided_id => null,
+  username => "MyUsername",
+}
+
+
+
+
+
 # OmniAuth Kinde Strategy
 
 This gem provides a simple way to authenticate to Windows Azure Active Directory (WAAD) over OAuth2 using OmniAuth.
