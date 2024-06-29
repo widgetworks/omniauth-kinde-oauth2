@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body>
+
+<form
+  method="post"
+  action="/auth/kinde_oauth2"
+>
+    <input
+      type="hidden"
+      name="authenticity_token"
+      value="<%= request_csrf %>"
+    />
+    <button type='submit'>Login with Kinde</button>
+</form>
+
+</body>
+</html>
+
