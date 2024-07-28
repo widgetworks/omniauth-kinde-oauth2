@@ -4,6 +4,12 @@ require 'json'
 require 'omniauth'
 require 'omniauth/kinde/errors'
 
+# This is taken from omniauth-auth0 jwt_validator.rb.
+#
+# We're not currently performing signature verification of the JWT
+# (e.g. loading jwks certificates). But if we need to do that in future,
+# then should refer back in the file history to reinstate it, or refer
+# back to the original Auth0 implementation.
 module OmniAuth
   module Kinde
     # JWT Validator class
@@ -29,16 +35,13 @@ module OmniAuth
         @client_secret = options.client_secret
       end
 
-      # Decodes a JWT and verifies it's signature. Only tokens signed with the RS256 or HS256 signatures are supported.
+      # Decodes a JWT ~~and verifies it's signature. Only tokens signed with the RS256 or HS256 signatures are supported.~~
       # @param jwt string - JWT to verify.
       # @return hash - The decoded token, if there were no exceptions.
       # @see https://github.com/jwt/ruby-jwt
       def decode(jwt)
-        head = token_head(jwt)
-        key, alg = extract_key(head)
-
         # Call decode to verify the signature
-        JWT.decode(jwt, key, true, decode_opts(alg))
+        JWT.decode(jwt, nil, false, decode_opts(alg))
       end
 
       # Verify a JWT.
@@ -61,36 +64,6 @@ module OmniAuth
         return id_token
       end
 
-      # Get the decoded head segment from a JWT.
-      # @return hash - The parsed head of the JWT passed, empty hash if not.
-      def token_head(jwt)
-        jwt_parts = jwt.split('.')
-        return {} if blank?(jwt_parts) || blank?(jwt_parts[0])
-
-        json_parse(Base64.decode64(jwt_parts[0]))
-      end
-
-      # Get the JWKS from the issuer and return a public key.
-      # @param x5c string - X.509 certificate chain from a JWKS.
-      # @return key - The X.509 certificate public key.
-      def jwks_public_cert(x5c)
-        x5c = Base64.decode64(x5c)
-
-        # https://docs.ruby-lang.org/en/2.4.0/OpenSSL/X509/Certificate.html
-        OpenSSL::X509::Certificate.new(x5c).public_key
-      end
-
-      # Return a specific key from a JWKS object.
-      # @param key string - Key to find in the JWKS.
-      # @param kid string - Key ID to identify the right JWK.
-      # @return nil|string
-      def jwks_key(key, kid)
-        return nil if blank?(jwks[:keys])
-
-        matching_jwk = jwks[:keys].find { |jwk| jwk[:kid] == kid }
-        matching_jwk[key] if matching_jwk
-      end
-
       private
       # Get the JWT decode options. We disable the claim checks since we perform our claim validation logic
       # Docs: https://github.com/jwt/ruby-jwt
@@ -106,33 +79,6 @@ module OmniAuth
           verify_subj: false,
           verify_not_before: false
         }
-      end
-
-      def extract_key(head)
-        if head[:alg] == 'RS256'
-          key, alg = [rs256_decode_key(head[:kid]), head[:alg]]
-        elsif head[:alg] == 'HS256'
-          key, alg = [@client_secret, head[:alg]]
-        else
-          raise OmniAuth::Kinde::TokenValidationError.new("Signature algorithm of #{head[:alg]} is not supported. Expected the ID token to be signed with RS256 or HS256")
-        end
-      end
-
-      def rs256_decode_key(kid)
-        jwks_x5c = jwks_key(:x5c, kid)
-
-        if jwks_x5c.nil?
-          raise OmniAuth::Kinde::TokenValidationError.new("Could not find a public key for Key ID (kid) '#{kid}'")
-        end
-
-        jwks_public_cert(jwks_x5c.first)
-      end
-
-      # Get a JWKS from the domain
-      # @return void
-      def jwks
-        jwks_uri = URI(@domain + '.well-known/jwks.json')
-        @jwks ||= json_parse(Net::HTTP.get(jwks_uri))
       end
 
       # Rails Active Support blank method.
