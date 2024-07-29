@@ -1,5 +1,6 @@
 $:.push File.dirname(__FILE__) + '/../lib'
 
+require 'json'
 require 'dotenv/load'
 require 'sinatra'
 require 'omniauth'
@@ -54,12 +55,21 @@ class SinatraKindeApp < Sinatra::Base
   end
 
   post '/log_out' do
+    # LOG_OUT_IDP = true
+    LOG_OUT_IDP = false
+
     if session[:auth_info]
       # do log out
-      kinde_domain = ENV['KINDE_DOMAIN']
       local_domain = "http://localhost:4567/logged_out"
       clear_session_auth()
-      redirect "https://#{kinde_domain}/logout?redirect=#{local_domain}"
+
+      if LOG_OUT_IDP
+        kinde_domain = ENV['KINDE_DOMAIN']
+        redirect "https://#{kinde_domain}/logout?redirect=#{local_domain}"
+      else
+        redirect to(local_domain)
+      end
+
     else
       redirect to('/')
     end
