@@ -1,10 +1,10 @@
-# DEV ONLY
-require 'json'
-# DEV ONLY
+# frozen_string_literal: true
 
+require 'jwt'
 require 'securerandom'
 require 'omniauth/strategies/oauth2'
-require 'jwt'
+require 'omniauth/kinde/jwt_validator'
+require 'omniauth/kinde/errors'
 
 module OmniAuth
   module Strategies
@@ -33,10 +33,53 @@ module OmniAuth
         super
       end
 
+      # Use the "id" key of the userinfo returned
+      # as the uid (globally unique string identifier).
       uid {
         raw_info['id']
       }
 
+      # Build the API credentials hash with returned auth data.
+      credentials do
+        credentials = {
+          'token' => access_token.token,
+          'expires' => true
+        }
+
+        if access_token.params
+          credentials.merge!(
+            'id_token' => access_token.params['id_token'],
+            'token_type' => access_token.params['token_type'],
+            'refresh_token' => access_token.refresh_token
+          )
+        end
+
+        # Retrieve and remove authorization params from the session
+        # @type [Hash]
+        session_authorize_params = (session['authorize_params'] || {})
+        session.delete('authorize_params')
+
+        auth_scope = session_authorize_params['scope']
+        if auth_scope.respond_to?(:include?) && auth_scope.include?('openid')
+          # Make sure the ID token can be verified and decoded.
+          jwt_validator.verify(credentials['id_token'], session_authorize_params)
+        end
+
+        credentials
+      end
+
+      # CFH 2024-07-29 - exclude this extra information so we don't exceed
+      # the 4k max cookie size.
+      #
+      # # Store all raw information for use in the session.
+      # extra do
+      #   {
+      #     raw_info: raw_info
+      #   }
+      # end
+
+      # Build a hash of information about the user
+      # with keys taken from the Auth Hash Schema.
       info do
         {
           first_name: raw_info['first_name'],
@@ -64,7 +107,6 @@ module OmniAuth
           'redirect_uri',
           'response_type',
           'scope',
-          'state',
         ].each do |key|
           params[key] = request.params[key] if request.params.key?(key)
         end
@@ -72,8 +114,8 @@ module OmniAuth
         # Generate nonce
         params[:nonce] = SecureRandom.hex
 
-        # # Store authorize params in the session for token verification
-        # session['authorize_params'] = params.to_hash
+        # Store authorize params in the session for token verification
+        session['authorize_params'] = params.to_hash
 
         params
       end
@@ -94,6 +136,10 @@ module OmniAuth
 
       private
 
+      def jwt_validator
+        @jwt_validator ||= OmniAuth::Kinde::JWTValidator.new(options)
+      end
+
       # userinfo returns an object like:
       #
       # {
@@ -109,7 +155,7 @@ module OmniAuth
         return @raw_info if @raw_info
 
         # Normally we would just decode the token and return that result,
-        # but kinde doesn't much of the needed information on that token:
+        # but kinde doesn't include much of the needed information on that token:
         # @raw_info ||= ::JWT.decode(access_token.token, nil, false).first
 
         # Instead, we make another request and get the user information

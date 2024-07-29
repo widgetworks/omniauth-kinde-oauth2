@@ -35,11 +35,23 @@ module OmniAuth
         @client_secret = options.client_secret
       end
 
+      # Get the decoded head segment from a JWT.
+      # @return hash - The parsed head of the JWT passed, empty hash if not.
+      def token_head(jwt)
+        jwt_parts = jwt.split('.')
+        return {} if blank?(jwt_parts) || blank?(jwt_parts[0])
+
+        json_parse(Base64.decode64(jwt_parts[0]))
+      end
+
       # Decodes a JWT ~~and verifies it's signature. Only tokens signed with the RS256 or HS256 signatures are supported.~~
       # @param jwt string - JWT to verify.
       # @return hash - The decoded token, if there were no exceptions.
       # @see https://github.com/jwt/ruby-jwt
       def decode(jwt)
+        head = token_head(jwt)
+        key, alg = extract_key(head)
+
         # Call decode to verify the signature
         JWT.decode(jwt, nil, false, decode_opts(alg))
       end
@@ -65,6 +77,18 @@ module OmniAuth
       end
 
       private
+
+      def extract_key(head)
+        if head[:alg] == 'RS256'
+          # key, alg = [rs256_decode_key(head[:kid]), head[:alg]]
+          key, alg = ['⚠️head[:kid] is not being decoded at the moment⚠️', head[:alg]]
+        elsif head[:alg] == 'HS256'
+          key, alg = [@client_secret, head[:alg]]
+        else
+          raise OmniAuth::Auth0::TokenValidationError.new("Signature algorithm of #{head[:alg]} is not supported. Expected the ID token to be signed with RS256 or HS256")
+        end
+      end
+
       # Get the JWT decode options. We disable the claim checks since we perform our claim validation logic
       # Docs: https://github.com/jwt/ruby-jwt
       # @return hash
@@ -102,14 +126,18 @@ module OmniAuth
         temp_domain = URI(uri)
         temp_domain = URI("https://#{uri}") unless temp_domain.scheme
         temp_domain = temp_domain.to_s
-        temp_domain.end_with?('/') ? temp_domain : "#{temp_domain}/"
+
+        # NOTE CFH: it looks like Auth0 always includes a trailing slash in their domains
+        # but kind *does not*. So we will change this to strip any trailing slashes instead.
+        # temp_domain.end_with?('/') ? temp_domain : "#{temp_domain}/"
+        temp_domain.chomp('/')
       end
 
       def verify_claims(id_token, authorize_params)
-        leeway = authorize_params[:leeway] || 60
-        max_age = authorize_params[:max_age]
-        nonce = authorize_params[:nonce]
-        organization = authorize_params[:organization]
+        leeway = authorize_params['leeway'] || 60
+        max_age = authorize_params['max_age']
+        nonce = authorize_params['nonce']
+        organization = authorize_params['organization']
 
         verify_iss(id_token)
         verify_sub(id_token)
