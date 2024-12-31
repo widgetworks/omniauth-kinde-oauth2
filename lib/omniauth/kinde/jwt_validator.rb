@@ -74,6 +74,11 @@ module OmniAuth
 
         json_parse(Base64.decode64(jwt_parts[0]))
       end
+      
+      def get_jwks_by_kid(kid)
+        return nil if blank?(jwks[:keys])
+        matching_jwk = jwks[:keys].find { |jwk| jwk[:kid] == kid }
+      end
 
       private
       # Get the JWT decode options. We disable the claim checks since we perform our claim validation logic
@@ -113,11 +118,6 @@ module OmniAuth
         else
           raise OmniAuth::Kinde::TokenValidationError.new("Signature algorithm of #{head[:alg]} is not supported. Expected the ID token to be signed with RS256")
         end
-      end
-      
-      def get_jwks_by_kid(kid)
-        return nil if blank?(jwks[:keys])
-        matching_jwk = jwks[:keys].find { |jwk| jwk[:kid] == kid }
       end
 
       # Get a JWKS from the domain
