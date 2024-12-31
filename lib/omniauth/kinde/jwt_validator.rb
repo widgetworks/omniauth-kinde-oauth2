@@ -16,13 +16,12 @@ module OmniAuth
     # rubocop:disable Metrics/
     class JWTValidator
       attr_accessor :issuer, :domain
-
+      
       # Initializer
       # @param options object
       #   options.domain - Application domain.
       #   options.issuer - Application issuer (optional).
       #   options.client_id - Application Client ID.
-      #   options.client_secret - Application Client Secret.
 
       def initialize(options, authorize_params = {})
         @domain = uri_string(options.domain)
@@ -32,28 +31,19 @@ module OmniAuth
         @issuer = uri_string(options.issuer) if options.respond_to?(:issuer)
 
         @client_id = options.client_id
-        @client_secret = options.client_secret
       end
 
-      # Get the decoded head segment from a JWT.
-      # @return hash - The parsed head of the JWT passed, empty hash if not.
-      def token_head(jwt)
-        jwt_parts = jwt.split('.')
-        return {} if blank?(jwt_parts) || blank?(jwt_parts[0])
-
-        json_parse(Base64.decode64(jwt_parts[0]))
-      end
-
-      # Decodes a JWT ~~and verifies it's signature. Only tokens signed with the RS256 or HS256 signatures are supported.~~
+      # Decodes a JWT and verifies it's signature. Only tokens signed with the RS256 or HS256 signatures are supported.
       # @param jwt string - JWT to verify.
       # @return hash - The decoded token, if there were no exceptions.
       # @see https://github.com/jwt/ruby-jwt
       def decode(jwt)
         head = token_head(jwt)
-        key, alg = extract_key(head)
-
+        jwks_with_kid, alg = extract_key(head)
+        
         # Call decode to verify the signature
-        JWT.decode(jwt, nil, false, decode_opts(alg))
+        options = decode_opts(alg)
+        JWT.decode(jwt, nil, true, options)
       end
 
       # Verify a JWT.
@@ -64,7 +54,7 @@ module OmniAuth
         if !jwt
           raise OmniAuth::Kinde::TokenValidationError.new('ID token is required but missing')
         end
-
+        
         parts = jwt.split('.')
         if parts.length != 3
           raise OmniAuth::Kinde::TokenValidationError.new('ID token could not be decoded')
@@ -75,20 +65,17 @@ module OmniAuth
 
         return id_token
       end
+      
+      # Get the decoded head segment from a JWT.
+      # @return hash - The parsed head of the JWT passed, empty hash if not.
+      def token_head(jwt)
+        jwt_parts = jwt.split('.')
+        return {} if blank?(jwt_parts) || blank?(jwt_parts[0])
 
-      private
-
-      def extract_key(head)
-        if head[:alg] == 'RS256'
-          # key, alg = [rs256_decode_key(head[:kid]), head[:alg]]
-          key, alg = ['⚠️head[:kid] is not being decoded at the moment⚠️', head[:alg]]
-        elsif head[:alg] == 'HS256'
-          key, alg = [@client_secret, head[:alg]]
-        else
-          raise OmniAuth::Auth0::TokenValidationError.new("Signature algorithm of #{head[:alg]} is not supported. Expected the ID token to be signed with RS256 or HS256")
-        end
+        json_parse(Base64.decode64(jwt_parts[0]))
       end
 
+      private
       # Get the JWT decode options. We disable the claim checks since we perform our claim validation logic
       # Docs: https://github.com/jwt/ruby-jwt
       # @return hash
@@ -101,8 +88,48 @@ module OmniAuth
           verify_aud: false,
           verify_jti: false,
           verify_subj: false,
-          verify_not_before: false
+          verify_not_before: false,
+          
+          # See `/home/coridyn/widgetworks/omniauth-workspace/omniauth-kinde-oauth2/spec/resources/jwks-kinde`
+          # for expected structure of this object
+          jwks: jwks,
         }
+      end
+
+      def extract_key(head)
+        if head[:alg] == 'RS256'
+          alg = head[:alg]
+          
+          kid = head[:kid]
+          jwks_with_kid = get_jwks_by_kid(kid)
+          if jwks_with_kid.nil?
+            raise OmniAuth::Kinde::TokenValidationError.new("Could not find a public key for Key ID (kid) '#{kid}'")
+          end
+          
+          return [jwks_with_kid, alg]
+          
+        # elsif head[:alg] == 'HS256'
+        #   alg = head[:alg]
+        else
+          raise OmniAuth::Kinde::TokenValidationError.new("Signature algorithm of #{head[:alg]} is not supported. Expected the ID token to be signed with RS256")
+        end
+      end
+      
+      def get_jwks_by_kid(kid)
+        return nil if blank?(jwks[:keys])
+        matching_jwk = jwks[:keys].find { |jwk| jwk[:kid] == kid }
+      end
+
+      # Get a JWKS from the domain
+      # @return void
+      def jwks
+        jwks_uri = URI(File.join(@domain, '.well-known/jwks'))
+        
+        # @jwks ||= json_parse(Net::HTTP.get(jwks_uri))
+        if !@jwks
+          @jwks = json_parse(Net::HTTP.get(jwks_uri))
+        end
+        @jwks
       end
 
       # Rails Active Support blank method.
@@ -118,7 +145,7 @@ module OmniAuth
       def json_parse(json)
         JSON.parse(json, symbolize_names: true)
       end
-
+      
       # Parse a URI into the desired string format
       # @param uri - the URI to parse
       # @return string
@@ -134,10 +161,10 @@ module OmniAuth
       end
 
       def verify_claims(id_token, authorize_params)
-        leeway = authorize_params['leeway'] || 60
-        max_age = authorize_params['max_age']
-        nonce = authorize_params['nonce']
-        organization = authorize_params['organization']
+        leeway = authorize_params[:leeway] || authorize_params['leeway'] || 60
+        max_age = authorize_params[:max_age] || authorize_params['max_age']
+        nonce = authorize_params[:nonce] || authorize_params['nonce']
+        organization = authorize_params[:organization] || authorize_params['organization']
 
         verify_iss(id_token)
         verify_sub(id_token)
