@@ -20,6 +20,5 @@ Gem::Specification.new do |gem|
 
   gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.8'
 
-  gem.add_development_dependency 'rspec', '>= 2.14'
-  gem.add_development_dependency 'rake'
+  gem.add_development_dependency 'bundler'
 end

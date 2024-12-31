@@ -16,6 +16,8 @@ Coridyn - this is the structure of data returned from the `/userinfo` endpoint
 
 # OmniAuth Kinde Strategy
 
+(NOTE: This is based on the `omniauth-auth0` gem: https://github.com/auth0/omniauth-auth0.git)
+
 This gem provides a simple way to authenticate to Windows Azure Active Directory (WAAD) over OAuth2 using OmniAuth.
 
 One of the unique challenges of WAAD OAuth is that WAAD is multi tenant. Any given tenant can have multiple active

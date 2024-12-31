@@ -12,3 +12,11 @@ group :example do
   gem "rackup"
   gem "puma"
 end
+
+group :test do
+  gem 'listen', '~> 3'
+  gem 'rack-test', '~> 2', '>= 2.0.2'
+  gem 'rspec', '~> 3'
+  gem 'webmock', '~> 3'
+  gem 'multi_json', '~> 1'
+end
