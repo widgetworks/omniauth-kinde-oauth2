@@ -1,0 +1,31 @@
+Encoded token:
+
+```
+eyJraWQiOiI2MDo1ODoyMjo4MDphNDowMTo2NDplNTo3MzowNzozYTpiMTphMzozMzo1Nzo0MCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOltdLCJhenAiOiI5ODc2NTQzMjEwYWJjZGVmOTg3NjU0MzIxNDU2Nzg5OCIsImV4cCI6MTcyMjMwNzE3NCwiaWF0IjoxNzIyMjIwNzczLCJpc3MiOiJodHRwczovL3NhbXBsZS5raW5kZS5jb20iLCJqdGkiOiIxMjM0NTY3OC1hYmNkLTQ1NmEtMTIzYi1hNGI1ZDNjZjQ1NmUiLCJvcmdfY29kZSI6Im9yZ18xMjM0NTY3ODlhYiIsInBlcm1pc3Npb25zIjpbXSwic2NwIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmUiXSwic3ViIjoia3BfZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTAifQ.qxzzaH87kkrg2y_YeT6WoCa8XX8ofdGKGnPWWNKu4aCnWVbgldrQw4oxH5k5FMz2Ua76rMa296uOoq7lLKdUBnVNdcs5sOSoaEe74891k4Sqga2co2cKfmwSmaqIBRL3FAttj9W8vwxuP1b-dC7UjDVCRigbT9eBVTggyB7aaaCFRWaaWKmbBacuw0y0UhtHv36YGOhzZOOuJkskgxJvMrpTS6PCedDtCUXAwH1lMGXTVYgTMF21WWS8w0xIXlz4LVmHlHrJeDUGAIkRLVuz7IZc95YKoAYSjAtlhxwS10b9exrDBz6QBeqfvFqs0vQlltWHhqn-XRrjgw3-kRCgbQ
+```
+
+Decoded token
+
+```JSON
+{
+  "alg": "RS256",
+  "kid": "60:58:22:80:a4:01:64:e5:73:07:3a:b1:a3:33:57:40",
+  "typ": "JWT"
+}.{
+  "aud": [],
+  "azp": "9876543210abcdef9876543214567898",
+  "exp": 1722307174,
+  "iat": 1722220773,
+  "iss": "https://sample.kinde.com",
+  "jti": "12345678-abcd-456a-123b-a4b5d3cf456e",
+  "org_code": "org_123456789ab",
+  "permissions": [],
+  "scp": [
+    "openid",
+    "email",
+    "profile",
+    "offline"
+  ],
+  "sub": "kp_fedcba9876543210fedcba9876543210"
+}.[Signature]
+```
