@@ -16,8 +16,7 @@ Gem::Specification.new do |gem|
   gem.version       = OmniAuth::KindeOauth2::VERSION
   gem.license       = "MIT"
 
-  gem.add_dependency 'jwt', ['>= 1.0', '< 3.0']
-
+  gem.add_runtime_dependency 'jwt', ['>= 1.0', '< 3.0']
   gem.add_runtime_dependency 'omniauth-oauth2', '~> 1.8'
 
   gem.add_development_dependency 'bundler'
