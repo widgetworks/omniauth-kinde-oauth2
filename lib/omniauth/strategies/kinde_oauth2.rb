@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'jwt'
 require 'securerandom'
 require 'omniauth/strategies/oauth2'
 require 'omniauth/kinde/jwt_validator'
@@ -12,8 +11,6 @@ module OmniAuth
 
       option :name, 'kinde_oauth2'
 
-      option :pkce, false
-
       args %i[
         client_id
         client_secret
@@ -22,14 +19,10 @@ module OmniAuth
 
       def client
         options.client_options.scope = 'openid email profile'
-        options.client_options.pkce_enabled = false
         options.client_options.site = domain_url
         options.client_options.authorize_url = "/oauth2/auth"
         options.client_options.token_url = "/oauth2/token"
         options.client_options.userinfo_url = '/oauth2/user_profile'
-
-        # options.client_options.debugging = false
-        options.client_options.debugging = true
         super
       end
 

@@ -15,9 +15,9 @@ class SinatraKindeApp < Sinatra::Base
 
   use OmniAuth::Builder do
     provider :kinde_oauth2, ENV['KINDE_CLIENT_ID'], ENV['KINDE_CLIENT_SECRET'], ENV['KINDE_DOMAIN'],
-      authorize_params: {
-        scope: 'openid email profile offline'  #<- NEED these, otherwise we get ONLY a token
-      }
+             authorize_params: {
+               scope: 'openid email profile'
+             }
   end
 
   get '/' do
@@ -55,8 +55,8 @@ class SinatraKindeApp < Sinatra::Base
   end
 
   post '/log_out' do
-    # LOG_OUT_IDP = true
-    LOG_OUT_IDP = false
+    LOG_OUT_IDP = true
+    # LOG_OUT_IDP = false
 
     if session[:auth_info]
       # do log out

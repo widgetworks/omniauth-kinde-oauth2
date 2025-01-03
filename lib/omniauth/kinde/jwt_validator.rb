@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 require 'base64'
-require 'uri'
-require 'json'
 require 'omniauth'
 require 'omniauth/kinde/errors'
+require 'json'
+require 'jwt'
+require 'uri'
 
 # This is taken from omniauth-auth0 jwt_validator.rb.
 #
